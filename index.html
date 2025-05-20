@@ -247,6 +247,18 @@
             opacity: 0.9;
         }
 
+        .category-pill {
+            background: var(--orange-web);
+            color: var(--oxford-blue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         /* Updated Delete Button */
         .delete-btn {
             background: var(--orange-web);
@@ -269,6 +281,15 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
 
+        .no-image {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--platinum);
+            background: rgba(0,0,0,0.1);
+            font-style: italic;
+        }
         /* Responsive Design */
         @media (max-width: 1200px) {
             .admin-main {
@@ -394,9 +415,21 @@
 
                         <div class="form-group">
                             <label>Price (NGN)</label>
-                            <input type="number" step="0.01" class="form-input" name="price" required>
+                            <input type="text" class="form-input" name="price" 
+                                oninput="formatPriceInput(this)" required>
                         </div>
 
+                        <!-- Add this after the price input -->
+                        <div class="form-group">
+                            <label>Product Category</label>
+                            <select class="form-input" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Land">Land</option>
+                                <option value="House">House</option>
+                                <option value="Automobiles">Automobiles</option>
+                                <option value="Rentals">Rentals</option>
+                            </select>
+                        </div>
                         <button type="submit" class="btn btn-primary">Save Product</button>
                     </form>
                 </section>
@@ -508,51 +541,94 @@ const ADMIN_PASSWORD = 'smartwave2023';
         });
 
         // Product Management
-        function handleProductSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            
-            const product = {
-                id: Date.now(),
-                name: formData.get('name'),
-                description: formData.get('description'),
-                price: parseFloat(formData.get('price')).toFixed(2),
-                images: uploadedImages,
-                date: new Date().toISOString()
-            };
+        // Price formatting functions
+function formatPriceInput(input) {
+    // Allow only numbers and decimals
+    let value = input.value.replace(/[^0-9.]/g, '');
+    value = value.replace(/(\..*)\./g, '$1');
+    
+    // Format with commas
+    if(value) {
+        const parts = value.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        input.value = parts.join('.');
+    }
+}
 
-            const products = JSON.parse(localStorage.getItem('products')) || [];
-            products.push(product);
-            localStorage.setItem('products', JSON.stringify(products));
 
-            e.target.reset();
-            uploadedImages = [];
-            document.getElementById('imagePreview').innerHTML = '';
-            loadProducts();
-            alert('Product saved successfully!');
-        }
+// Update the handleProductSubmit function
+// Update handleProductSubmit function
+function handleProductSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    // Clean price value before saving
+    const rawPrice = formData.get('price').replace(/,/g, '');
+    const numericPrice = parseFloat(rawPrice);
+    
+    if (isNaN(numericPrice)) {
+        alert('Please enter a valid price');
+        return;
+    }
+    
+    const price = numericPrice.toFixed(2);
 
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products')) || [];
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = products.map(product => `
-                <div class="product-card">
-                    <div class="product-image-container">
-                        ${product.images.map(img => `
-                            <img src="${img}" class="product-image" alt="${product.name}">
-                        `).join('')}
-                    </div>
-                    <div class="product-content">
-                        <h3 class="product-name">${product.name}</h3>
-                        <p>${product.description}</p>
-                        <p class="product-price">NGN${product.price}</p>
-                        <button class="delete-btn" onclick="deleteProduct(${product.id})">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
+    const product = {
+        id: Date.now(),
+        name: formData.get('name'),
+        description: formData.get('description'),
+        price: price,
+        category: formData.get('category'), // Add category
+        images: uploadedImages,
+        date: new Date().toISOString()
+    };
+
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    products.push(product);
+    localStorage.setItem('products', JSON.stringify(products));
+
+    e.target.reset();
+    uploadedImages = [];
+    document.getElementById('imagePreview').innerHTML = '';
+    loadProducts();
+    alert('Product saved successfully!');
+}
+// Update the formatPriceNumber function
+function formatPriceNumber(price) {
+    const numericValue = typeof price === 'string' 
+        ? parseFloat(price.replace(/,/g, '')) 
+        : price;
+    
+    return isNaN(numericValue) ? '₦0.00' : 
+        '₦' + numericValue.toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+}
+
+// Update the loadProducts function
+function loadProducts() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    const grid = document.getElementById('productsGrid');
+grid.innerHTML = products.slice().reverse().map(product => `
+    <div class="product-card">
+        <div class="product-image-container">
+            ${product.images && product.images.length > 0 ? 
+                `<img src="${product.images[0]}" class="product-image" alt="${product.name}">` :
+                '<div class="no-image">No Image</div>'}
+        </div>
+        <div class="product-content">
+            <div class="category-pill">${product.category}</div>
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <p class="product-price">${formatPriceNumber(product.price)}</p>
+            <button class="delete-btn" onclick="deleteProduct(${product.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+`).join('');
+}
 
         function deleteProduct(id) {
             const products = JSON.parse(localStorage.getItem('products'))
