@@ -1,0 +1,46 @@
+ @media (max-width: 1600px) {
+            .form-container {
+                max-width: 1000px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .admin-main {
+                padding: 2rem;
+            }
+            
+            .form-container {
+                max-width: 800px;
+                padding: 0 1rem;
+            }
+            
+            .product-form {
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .admin-main {
+                padding: 2rem 1rem;
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .form-container {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .product-form {
+                padding: 2rem;
+                border-radius: 12px;
+            }
+
+            .form-group {
+                max-width: 100%;
+            }
+        }
+
+     
+
+   
